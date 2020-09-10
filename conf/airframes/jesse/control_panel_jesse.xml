@@ -37,8 +37,10 @@
                 <arg flag="-zoom" constant="40."/>
             </program>
             <program name="Gazebo"/>
-            <program name="Messages">
-                <arg flag="-g" constant="300x300-1000+600"/>
+            <program name="Joystick" command="sw/ground_segment/joystick/input2ivy">
+                <arg flag="-ac" constant="@AIRCRAFT"/>
+                <arg flag="hobbyking.xml"/>
+                <arg flag="-d 1"/>
             </program>
             <program name="Real-time Plotter">
                 <arg flag="-g" constant="1000x250-1000+0"/>
@@ -56,29 +58,6 @@
                 <arg flag="-c" constant="-4.00"/>
                 <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:h"/>
                 <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:v"/>
-                <arg flag="-n"/>
-                <arg flag="-g" constant="1000x250-0+250"/>
-                <arg flag="-t" constant="ACCELERATION"/>
-                <arg flag="-u" constant="0.05"/>
-                <arg flag="-c" constant="0.00"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:T"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:a_raw"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:a_lp"/>
-                <arg flag="-n"/>
-                <arg flag="-g" constant="1000x250-0+500"/>
-                <arg flag="-t" constant="THRUST"/>
-                <arg flag="-u" constant="0.05"/>
-                <arg flag="-c" constant="0.00"/>
-                <arg flag="-c" constant="*:telemetry:ROTORCRAFT_FP:thrust"/>
-                <arg flag="-n"/>
-                <arg flag="-g" constant="1000x250-0+750"/>
-                <arg flag="-t" constant="STATUS"/>
-                <arg flag="-u" constant="0.05"/>
-                <arg flag="-c" constant="0.00"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:mode"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:record"/>
-                <arg flag="-c" constant="*:telemetry:ROTORCRAFT_STATUS:ap_v_mode"/>
-                <arg flag="-c" constant="*:telemetry:ROTORCRAFT_STATUS:ap_in_flight"/>
             </program>
             <program name="Settings">
                 <arg flag="-ac" constant="@AIRCRAFT"/>
@@ -95,8 +74,10 @@
             <program name="NatNet" command="sw/ground_segment/misc/natnet2ivy">
                 <arg flag="-ac 1" constant="@AC_ID"/>
             </program>
-            <program name="Messages">
-                <arg flag="-g" constant="300x300-1000+600"/>
+            <program name="Joystick" command="sw/ground_segment/joystick/input2ivy">
+                <arg flag="-ac" constant="@AIRCRAFT"/>
+                <arg flag="hobbyking.xml"/>
+                <arg flag="-d 1"/>
             </program>
             <program name="Real-time Plotter">
                 <arg flag="-g" constant="1000x250-1000+0"/>
@@ -114,31 +95,7 @@
                 <arg flag="-c" constant="-4.00"/>
                 <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:h"/>
                 <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:v"/>
-                <arg flag="-n"/>
-                <arg flag="-g" constant="1000x250-0+250"/>
-                <arg flag="-t" constant="ACCELERATION"/>
-                <arg flag="-u" constant="0.05"/>
-                <arg flag="-c" constant="0.00"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:T"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:a_raw"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:a_lp"/>
-                <arg flag="-n"/>
-                <arg flag="-g" constant="1000x250-0+500"/>
-                <arg flag="-t" constant="THRUST"/>
-                <arg flag="-u" constant="0.05"/>
-                <arg flag="-c" constant="0.00"/>
-                <arg flag="-c" constant="*:telemetry:ROTORCRAFT_FP:thrust"/>
-                <arg flag="-n"/>
-                <arg flag="-g" constant="1000x250-0+750"/>
-                <arg flag="-t" constant="STATUS"/>
-                <arg flag="-u" constant="0.05"/>
-                <arg flag="-c" constant="0.00"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:mode"/>
-                <arg flag="-c" constant="*:telemetry:SPIKING_LANDING:record"/>
-                <arg flag="-c" constant="*:telemetry:ROTORCRAFT_STATUS:ap_v_mode"/>
-                <arg flag="-c" constant="*:telemetry:ROTORCRAFT_STATUS:ap_in_flight"/>
-                <arg flag="-c" constant="*:telemetry:ROTORCRAFT_STATUS:gps_status"/>
-            </program>
+                </program>
             <program name="Settings">
                 <arg flag="-ac" constant="@AIRCRAFT"/>
                 <arg flag="-g" constant="800x200-1000+300"/>
