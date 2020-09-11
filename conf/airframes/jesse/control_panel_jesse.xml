@@ -73,6 +73,7 @@
             <program name="GCS"/>
             <program name="NatNet" command="sw/ground_segment/misc/natnet2ivy">
                 <arg flag="-ac 1" constant="@AC_ID"/>
+                <arg flag="-offset_angle 3"/>
             </program>
             <program name="Joystick" command="sw/ground_segment/joystick/input2ivy">
                 <arg flag="-ac" constant="@AIRCRAFT"/>
