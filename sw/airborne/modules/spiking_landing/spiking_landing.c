@@ -126,6 +126,7 @@ struct SpikingLandingSettings sl_settings;
 static void send_sl(struct transport_tx *trans, struct link_device *dev) {
   pprz_msg_send_SPIKING_LANDING(
       trans, dev, AC_ID, &divergence, &divergence_dot,
+      &(stateGetPositionNed_f()->x), &(stateGetPositionNed_f()->y),
       &(stateGetPositionNed_f()->z), &(stateGetPositionEnu_f()->z),
       &(state.ned_origin_f.hmsl), &(stateGetSpeedNed_f()->z),
       &(stateGetAccelNed_f()->z), &accel_ned_filt.o[0], &thrust,
