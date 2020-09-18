@@ -86,9 +86,10 @@
         <axis name="ROLL" failsafe_value="0"/>
         <axis name="YAW" failsafe_value="0"/>
         <!-- Thrust value in case OptiTrack is lost -->
-        <!-- Without any load: nominal thrust = 0.56, here do 0.5 * PPRZ_MAX - 200 (PPRZ_MAX = 9600) -->
-        <!-- With upboard + mount: nominal thrust = 0.76, so 0.7 * 9600 - 200 = 6520 -->
-        <axis name="THRUST" failsafe_value="4600"/>
+        <!-- Without any load: nominal thrust = 0.56, here do 0.46 * PPRZ_MAX (PPRZ_MAX = 9600) = 4416 -->
+        <!-- With upboard + mount: nominal thrust = 0.76, so 0.66 * 9600 = 6336 -->
+        <!-- With powerbank setup: nominal thrust = 0.79, so 0.69 * 9600 = 6624 -->
+        <axis name="THRUST" failsafe_value="4416"/>
     </commands>
 
     <servos driver="Default">
@@ -167,7 +168,8 @@
         <!-- setpoint limits for attitude stabilization rc flight -->
         <define name="SP_MAX_PHI" value="45" unit="deg"/>
         <define name="SP_MAX_THETA" value="45" unit="deg"/>
-        <define name="SP_MAX_R" value="300" unit="deg/s"/>
+        <!-- Max R setpoint: 300 gives big oscillations, 120 is perfect -->
+        <define name="SP_MAX_R" value="120" unit="deg/s"/>
         <define name="DEADBAND_A" value="0"/>
         <define name="DEADBAND_E" value="0"/>
         <define name="DEADBAND_R" value="50"/>
@@ -249,24 +251,24 @@
     </section>
 
     <section name="GUIDANCE_V" prefix="GUIDANCE_V_">
-        <define name="HOVER_KP" value="400"/>  <!-- GPS: 400, no GPS: 300 -->
-        <define name="HOVER_KD" value="120"/>  <!-- GPS: 120, no GPS: 100 -->
-        <define name="HOVER_KI" value="20"/>   <!-- GPS: 20, no GPS: 20 -->
-        <!-- 0.56 without any load, 0.76 with mounts + upboard -->
+        <define name="HOVER_KP" value="400"/>
+        <define name="HOVER_KD" value="120"/>
+        <define name="HOVER_KI" value="20"/>
+        <!-- Nominal throttle: 0.56 without any load, 0.76 with mounts + upboard, 0.79 with powerbank setup -->
         <define name="NOMINAL_HOVER_THROTTLE" value="0.56"/>
         <define name="ADAPT_THROTTLE_ENABLED" value="TRUE"/>
     </section>
 
-    <!-- TODO: In process of tuning, difficult... -->
+    <!-- Tuned for Bebop 2 Power (TUBB2NB2) at 1 m and 3.5 m height -->
     <section name="GUIDANCE_H" prefix="GUIDANCE_H_">
         <define name="REF_MAX_SPEED" value="2" unit="m/s"/>
         <define name="MAX_BANK" value="35" unit="deg"/>
-        <define name="PGAIN" value="230"/>  <!-- GPS: 250, no GPS: 200 -->
-        <define name="DGAIN" value="160"/>  <!-- GPS: 200, no GPS: 200 -->
-        <define name="IGAIN" value="10"/>   <!-- GPS: 10, no GPS: 10 -->
+        <define name="PGAIN" value="230"/>
+        <define name="DGAIN" value="160"/>
+        <define name="IGAIN" value="10"/>
     </section>
 
-    <!-- TODO: What does this do? -->
+    <!-- TODO: What does this do? Potentially better guidance, explore later -->
     <!-- <section name="GUIDANCE_INDI" prefix="GUIDANCE_INDI_">
         <define name="POS_GAIN" value="0.5"/>
         <define name="SPEED_GAIN" value="1.8"/>
