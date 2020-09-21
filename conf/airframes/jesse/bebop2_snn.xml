@@ -255,6 +255,7 @@
         <define name="HOVER_KD" value="120"/>
         <define name="HOVER_KI" value="20"/>
         <!-- Nominal throttle: 0.56 without any load, 0.76 with mounts + upboard, 0.79 with powerbank setup -->
+        <!-- 0.68 in Gazebo -->
         <define name="NOMINAL_HOVER_THROTTLE" value="0.56"/>
         <define name="ADAPT_THROTTLE_ENABLED" value="TRUE"/>
     </section>
