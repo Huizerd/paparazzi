@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Huizerd
+ * Copyright (C) Kirk Scheper
  *
  * This file is part of paparazzi
  *
@@ -18,28 +18,19 @@
  * <http://www.gnu.org/licenses/>.
  */
 /**
- * @file "modules/spiking_spiking_landing/spiking_landing.h"
- * @author Huizerd
- * Spiking neural networks for optical flow landing.
+ * @file "modules/event_based_flow/nn.h"
+ * @author Kirk Scheper
+ * This module is generates a command to avoid other vehicles based on their relative gps location
  */
 
-#pragma once
+#ifndef EVENT_OPTICAL_FLOW_NN_H
+#define EVENT_OPTICAL_FLOW_NN_H
 
-// tinysnn headers
-// Select correct based on using a two- or three-layer network!
-#include "TwoLayerNetwork.h"
-// #include "ThreeLayerNetwork.h"
+#include "std.h"
 
-// C standard library headers
-#include <stdbool.h>
-#include <stdint.h>
-
-// Module functions
-extern void spiking_landing_init(void);
-extern void spiking_landing_event(void);
-
-// Spiking network
-extern Network net;
+// modules
+extern void nn_init(void);
+extern void nn_cntrl(void);
 
 // Divergence + derivative and thrust for logging
 // And recording variable to easily identify descents
@@ -47,14 +38,12 @@ extern Network net;
 extern float divergence, divergence_dot, acc_lp, thrust_lp, thrust;
 extern float acceleration_sp;
 extern float div_gt, divdot_gt;
-extern uint16_t spike_count;
+extern uint16_t spike_count; // not used!
 extern uint8_t record;
 
-// Struct to hold settings
-struct SpikingLandingSettings {
-  float thrust_effect;          ///< thrust effectiveness
-  float thrust_p_gain;          ///< P-gain for active thrust control
-  float thrust_i_gain;          ///< I-gain for active thrust control
-};
+// settings
+extern float thrust_effectiveness;
+extern float nn_thrust_p_gain;
+extern float nn_thrust_i_gain;
 
-extern struct SpikingLandingSettings sl_settings;
+#endif  // EVENT_OPTICAL_FLOW_NN_H

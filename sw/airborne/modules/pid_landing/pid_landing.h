@@ -18,28 +18,20 @@
  * <http://www.gnu.org/licenses/>.
  */
 /**
- * @file "modules/spiking_spiking_landing/spiking_landing.h"
+ * @file "modules/pid_landing/pid_landing.h"
  * @author Huizerd
- * Spiking neural networks for optical flow landing.
+ * Proportional controller for optical flow landing.
  */
 
 #pragma once
-
-// tinysnn headers
-// Select correct based on using a two- or three-layer network!
-#include "TwoLayerNetwork.h"
-// #include "ThreeLayerNetwork.h"
 
 // C standard library headers
 #include <stdbool.h>
 #include <stdint.h>
 
 // Module functions
-extern void spiking_landing_init(void);
-extern void spiking_landing_event(void);
-
-// Spiking network
-extern Network net;
+extern void pid_landing_init(void);
+extern void pid_landing_event(void);
 
 // Divergence + derivative and thrust for logging
 // And recording variable to easily identify descents
@@ -47,14 +39,28 @@ extern Network net;
 extern float divergence, divergence_dot, acc_lp, thrust_lp, thrust;
 extern float acceleration_sp;
 extern float div_gt, divdot_gt;
-extern uint16_t spike_count;
+extern uint16_t spike_count; // not used!
 extern uint8_t record;
 
 // Struct to hold settings
-struct SpikingLandingSettings {
+struct PIDLandingSettings {
+  float p_gain;                 ///< P-gain for optical flow control
+  float i_gain;                 ///< I-gain for optical flow control
+  float d_gain;                 ///< D-gain for optical flow control
+  float div_setpoint;           ///< divergence setpoint for optical flow control
+  float t_min;                  ///< lower bound for thrust
+  float t_max;                  ///< upper bound for thrust
   float thrust_effect;          ///< thrust effectiveness
   float thrust_p_gain;          ///< P-gain for active thrust control
   float thrust_i_gain;          ///< I-gain for active thrust control
 };
 
-extern struct SpikingLandingSettings sl_settings;
+// Struct for optical flow control errors
+struct PIDErrors {
+  float sum_err;
+  float d_err;
+  float prev_err;
+};
+
+extern struct PIDLandingSettings pl_settings;
+extern struct PIDErrors pl_errors;
