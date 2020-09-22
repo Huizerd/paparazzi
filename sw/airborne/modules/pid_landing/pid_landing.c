@@ -103,7 +103,7 @@ static Butterworth2LowPass thrust_filt;
 // Variables retained between module calls
 // For divergence + derivative, low-passed acceleration, thrust
 float divergence, divergence_dot, acc_lp, thrust, thrust_lp;
-float acceleration_sp
+float acceleration_sp;
 float div_gt, divdot_gt;
 float div_gt_tmp;
 // Spike count --> not used
