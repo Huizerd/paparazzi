@@ -174,9 +174,9 @@
         <!-- trust GPS a lot: -->
         <define name="VFF_R_GPS" value="0.00001"/>
         <define name="VFF_VZ_R_GPS" value="0.00001"/>
-        <!-- <define name="SONAR_MIN_RANGE" value="0.0"/> -->
-        <!-- <define name="SONAR_MAX_RANGE" value="6.0"/> -->
-        <!-- <define name="SONAR_UPDATE_ON_AGL" value="FALSE"/> -->
+        <define name="SONAR_MIN_RANGE" value="0.0"/>
+        <define name="SONAR_MAX_RANGE" value="6.0"/>
+        <define name="SONAR_UPDATE_ON_AGL" value="FALSE"/>
     </section>
 
     <section name="RC_SETPOINT" prefix="STABILIZATION_ATTITUDE_">
