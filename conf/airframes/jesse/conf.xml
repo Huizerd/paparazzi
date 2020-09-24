@@ -7,7 +7,7 @@
    telemetry="telemetry/default_rotorcraft.xml"
    flight_plan="flight_plans/rotorcraft_optitrack.xml"
    settings="settings/rotorcraft_basic.xml"
-   settings_modules="modules/nn_divergence_landing.xml modules/video_capture.xml modules/cv_opticflow.xml modules/bebop_cam.xml modules/ins_extended.xml modules/ahrs_int_cmpl_quat.xml modules/gps.xml modules/imu_common.xml modules/stabilization_int_quat.xml modules/stabilization_indi_simple.xml modules/nav_basic_rotorcraft.xml modules/guidance_rotorcraft.xml"
+   settings_modules="modules/nn_landing.xml modules/video_capture.xml modules/cv_opticflow.xml modules/bebop_cam.xml modules/ins_extended.xml modules/ahrs_int_cmpl_quat.xml modules/gps.xml modules/imu_common.xml modules/stabilization_int_quat.xml modules/stabilization_indi_simple.xml modules/nav_basic_rotorcraft.xml modules/guidance_rotorcraft.xml"
    gui_color="white"
   />
   <aircraft
@@ -30,6 +30,17 @@
    flight_plan="flight_plans/rotorcraft_optitrack.xml"
    settings="settings/rotorcraft_basic.xml"
    settings_modules="modules/spiking_landing.xml modules/video_capture.xml modules/cv_opticflow.xml modules/bebop_cam.xml modules/ins_extended.xml modules/ahrs_int_cmpl_quat.xml modules/gps.xml modules/imu_common.xml modules/stabilization_int_quat.xml modules/stabilization_indi_simple.xml modules/nav_basic_rotorcraft.xml modules/guidance_rotorcraft.xml"
+   gui_color="white"
+  />
+  <aircraft
+   name="Bebop2_x"
+   ac_id="247"
+   airframe="airframes/jesse/bebop2_x.xml"
+   radio="radios/dummy.xml"
+   telemetry="telemetry/default_rotorcraft.xml"
+   flight_plan="flight_plans/rotorcraft_optitrack.xml"
+   settings="settings/rotorcraft_basic.xml"
+   settings_modules="modules/nn_landing.xml modules/video_capture.xml modules/cv_opticflow.xml modules/bebop_cam.xml modules/ins_exteded.xml modules/ahrs_int_cmpl_quat.xml modules/gps.xml modules/imu_common.xml modules/stabilization_int_quat.xml modules/stabilization_indi_simple.xml modules/nav_basic_rotorcraft.xml modules/guidance_rotorcraft.xml"
    gui_color="white"
   />
 </conf>

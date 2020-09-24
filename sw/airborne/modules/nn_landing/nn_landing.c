@@ -1,7 +1,6 @@
 /*
  * Copyright (C) Huizerd
  * Copyright (C) Kirk Scheper
- * Copyright (C) Guido de Croon
  *
  * This file is part of paparazzi
  *
@@ -20,13 +19,19 @@
  * <http://www.gnu.org/licenses/>.
  */
 /**
- * @file "modules/pid_landing/pid_landing.c"
+ * @file "modules/nn_landing/nn_landing.c"
  * @author Huizerd
- * Proportional controller for optical flow landing.
+ * Artificial neural networks for optical flow landing.
  */
 
 // Header for this file
-#include "modules/pid_landing/pid_landing.h"
+#include "modules/nn_landing/nn_landing.h"
+
+// Header with network parameters
+#include "modules/nn_landing/nn_weights.h"
+
+// Header for UART communication
+#include "modules/uart_driver/uart_driver.h"
 
 // Paparazzi headers
 #include "firmwares/rotorcraft/guidance/guidance_v_adapt.h"
@@ -48,49 +53,30 @@
 #include <stdio.h>
 
 // Use optical flow estimates
-#ifndef PL_OPTICAL_FLOW_ID
-#define PL_OPTICAL_FLOW_ID ABI_BROADCAST
+#ifndef NL_OPTICAL_FLOW_ID
+#define NL_OPTICAL_FLOW_ID ABI_BROADCAST
 #endif
-PRINT_CONFIG_VAR(PL_OPTICAL_FLOW_ID)
+PRINT_CONFIG_VAR(NL_OPTICAL_FLOW_ID)
 
 // Other default values
 // Closed-loop thrust control, else linear transform
-#define PL_ACTIVE_CONTROL true
-
-// Gains, setpoint and clamps for optical flow control
-#ifndef PL_P_GAIN
-#define PL_P_GAIN 1.96f
-#endif
-#ifndef PL_I_GAIN
-#define PL_I_GAIN 0.0f
-#endif
-#ifndef PL_D_GAIN
-#define PL_D_GAIN 0.0f
-#endif
-#ifndef PL_DIV_SP
-#define PL_DIV_SP 2.5f
-#endif
-#ifndef PL_T_MIN
-#define PL_T_MIN -0.7f
-#endif
-#ifndef PL_T_MAX
-#define PL_T_MAX 0.3f
-#endif
+#define NL_ACTIVE_CONTROL true
+// #define NL_UART_CONTROL
 
 // Gains for closed-loop control
-#ifndef PL_THRUST_EFFECT
-#define PL_THRUST_EFFECT 0.05f
+#ifndef NL_THRUST_EFFECT
+#define NL_THRUST_EFFECT 0.05f
 #endif
-#ifndef PL_THRUST_P_GAIN
-#define PL_THRUST_P_GAIN 0.7f
+#ifndef NL_THRUST_P_GAIN
+#define NL_THRUST_P_GAIN 0.7f
 #endif
-#ifndef PL_THRUST_I_GAIN
-#define PL_THRUST_I_GAIN 0.3f
+#ifndef NL_THRUST_I_GAIN
+#define NL_THRUST_I_GAIN 0.3f
 #endif
 
 // Optical flow settings
-#ifndef PL_OF_FILTER_CUTOFF
-#define PL_OF_FILTER_CUTOFF 1.5f
+#ifndef NL_OF_FILTER_CUTOFF
+#define NL_OF_FILTER_CUTOFF 1.5f
 #endif
 
 // Events
@@ -114,14 +100,36 @@ uint8_t record;
 static float nominal_throttle;
 static bool active_control;
 
+// Kirk's network uses half of our divergence
+static float divergence_half, divergence_dot_half;
+
+// Network specification
+// Layers
+float input_layer_out[nr_input_neurons] = {0};
+float hidden_layer_out[nr_hidden_neurons] = {0};
+float layer2_out[nr_output_neurons] = {0};
+// Type
+#if NN_TYPE == NN || NN_TYPE == RNN
+static float relu(float val)
+{
+  BoundLower(val, 0.f);
+  return val;
+}
+
+#elif NN_TYPE == CTRNN
+
+static float sigmoid(float val)
+{
+  return 1.f / (1.f + expf(-val));
+}
+#endif
+
 // Struct to hold settings
-struct PIDLandingSettings pl_settings;
-// And one to hold errors
-struct PIDErrors pl_errors;
+struct NNLandingSettings nl_settings;
 
 // Sending stuff to ground station
 // Divergence + derivative, height, velocity, acceleration, thrust, mode
-static void send_pl(struct transport_tx *trans, struct link_device *dev) {
+static void send_nl(struct transport_tx *trans, struct link_device *dev) {
   pprz_msg_send_SPIKING_LANDING(
       trans, dev, AC_ID, &divergence, &divergence_dot,
       &(stateGetPositionNed_f()->x), &(stateGetPositionNed_f()->y),
@@ -134,61 +142,122 @@ static void send_pl(struct transport_tx *trans, struct link_device *dev) {
 // Function definitions
 // Callback function of optical flow estimate (bound to optical flow ABI
 // messages)
-static void pl_optical_flow_cb(uint8_t sender_id, uint32_t stamp,
+static void nl_optical_flow_cb(uint8_t sender_id, uint32_t stamp,
                                int16_t UNUSED flow_x, int16_t UNUSED flow_y,
                                int16_t UNUSED flow_der_x,
                                int16_t UNUSED flow_der_y, float UNUSED quality,
                                float size_divergence);
 
-// Spiking landing module functions
-static void pl_init(void);
-static void pl_run(float divergence, float divergence_dot);
-
-// Proportional divergence control
-static float pl_divergence_control(float divergence, float P, float I, float D, float dt);
+// NN landing module functions
+static void nl_init(void);
+static void nl_run(float divergence, float divergence_dot, float dt);
 
 // Closed-loop, active thrust control
-static void pl_control(void);
+static void nl_control(void);
 
 // Init global variables
 static void init_globals(void);
 
+// Network functions
+// Zeroing neurons
+static void zero_neurons(void){
+  for (int16_t i = 0; i < nr_input_neurons; i++){
+    input_layer_out[i] = 0.f;
+  }
+  for (int16_t i = 0; i < nr_hidden_neurons; i++){
+    hidden_layer_out[i] = 0.f;
+  }
+  for (int16_t i = 0; i < nr_output_neurons; i++){
+    layer2_out[i] = 0.f;
+  }
+}
+
+// Run the various network types
+static float predict_nn(float in[], float dt)
+{
+  int i,j;
+
+  for (i = 0; i < nr_input_neurons; i++){
+#if NN_TYPE == NN
+    input_layer_out[i] = in[i] + bias0[i];
+#elif NN_TYPE == RNN
+    input_layer_out[i] = in[i] + bias0[i] + input_layer_out[i]*recurrent_weights0[i];
+#elif NN_TYPE == CTRNN
+    input_layer_out[i] += (in[i] - input_layer_out[i]) * dt / (dt + time_const0[i]);
+#endif
+  }
+
+  float potential;
+#if NN_TYPE == NN || NN_TYPE == RNN
+  for (i = 0; i < nr_hidden_neurons; i++){
+    potential = 0.f;
+    for (j = 0; j < nr_input_neurons; j++){
+      potential += input_layer_out[j]*layer1_weights[j][i];
+    }
+#if NN_TYPE == RNN
+    potential += hidden_layer_out[i]*recurrent_weights1[i];
+#endif
+    hidden_layer_out[i] = relu(potential + bias1[i]);
+  }
+
+  for (i = 0; i < nr_output_neurons; i++){
+    potential = 0.f;
+    for (j = 0; j < nr_hidden_neurons; j++){
+      potential += hidden_layer_out[j]*layer2_weights[j][i];
+    }
+#if NN_TYPE == RNN
+    potential += layer2_out[i]*recurrent_weights2[i];
+#endif
+    layer2_out[i] = potential + bias2[i];
+  }
+
+#elif NN_TYPE == CTRNN
+  for (i = 0; i < nr_hidden_neurons; i++) {
+    potential = 0.f;
+    for (j = 0; j < nr_input_neurons; j++) {
+      potential += tanhf(gain0[j]*(input_layer_out[j] + bias0[j]))*layer1_weights[j][i];
+    }
+    hidden_layer_out[i] += (potential - hidden_layer_out[i]) * dt / (time_const1[i] + dt);
+  }
+
+  for (i = 0; i < nr_output_neurons; i++) {
+    potential = 0.f;
+    for (j = 0; j < nr_hidden_neurons; j++) {
+      potential += tanhf(gain1[j]*(hidden_layer_out[j] + bias1[j]))*layer2_weights[j][i];
+    }
+    layer2_out[i] += (potential - layer2_out[i]) * dt / (time_const2[i] + dt);
+  }
+#endif
+
+  return layer2_out[0];
+}
+
 // Module initialization function
-static void pl_init() {
+static void nl_init() {
+
+#ifndef NL_UART_CONTROL  
+  // Init network
+  zero_neurons();
+#endif
+
   // Fill settings
-  pl_settings.p_gain = PL_P_GAIN;
-  pl_settings.i_gain = PL_I_GAIN;
-  pl_settings.d_gain = PL_D_GAIN;
-  pl_settings.div_setpoint = PL_DIV_SP;
-  pl_settings.t_min = PL_T_MIN;
-  pl_settings.t_max = PL_T_MAX;
-  pl_settings.thrust_effect = PL_THRUST_EFFECT;
-  pl_settings.thrust_p_gain = PL_THRUST_P_GAIN;
-  pl_settings.thrust_i_gain = PL_THRUST_I_GAIN;
-
-  printf("\nP: %f\n", pl_settings.p_gain);
-  printf("D sp: %f\n", pl_settings.div_setpoint);
-  printf("Tmin: %f\n", pl_settings.t_min);
-  printf("Tmax: %f\n\n", pl_settings.t_max);
-
-  // Fill errors
-  pl_errors.sum_err = 0.0f;
-  pl_errors.d_err = 0.0f;
-  pl_errors.prev_err  = 0.0f;
+  nl_settings.thrust_effect = NL_THRUST_EFFECT;
+  nl_settings.thrust_p_gain = NL_THRUST_P_GAIN;
+  nl_settings.thrust_i_gain = NL_THRUST_I_GAIN;
 
   // Init global variables
   init_globals();
 
   // Register telemetry message
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_SPIKING_LANDING,
-                              send_pl);
+                              send_nl);
 
   // Subscribe to optical flow estimation
-  AbiBindMsgOPTICAL_FLOW(PL_OPTICAL_FLOW_ID, &optical_flow_ev,
-                         pl_optical_flow_cb);
+  AbiBindMsgOPTICAL_FLOW(NL_OPTICAL_FLOW_ID, &optical_flow_ev,
+                         nl_optical_flow_cb);
 
   // Init low-pass filters for acceleration and thrust
-  float tau = 1.0f / (2.0f * M_PI * PL_OF_FILTER_CUTOFF);
+  float tau = 1.0f / (2.0f * M_PI * NL_OF_FILTER_CUTOFF);
   float ts = 1.0f / PERIODIC_FREQUENCY;
   init_butterworth_2_low_pass(&accel_ned_filt, tau, ts, 0.0f);
   init_butterworth_2_low_pass(&thrust_filt, tau, ts, 0.0f);
@@ -197,7 +266,9 @@ static void pl_init() {
 // Reset global variables (e.g., when starting/re-entering module)
 static void init_globals() {
   divergence = 0.0f;
+  divergence_half = 0.0f;
   divergence_dot = 0.0f;
+  divergence_dot_half = 0.0f;
   div_gt = 0.0f;
   divdot_gt = 0.0f;
   div_gt_tmp = 0.0f;
@@ -212,7 +283,7 @@ static void init_globals() {
 }
 
 // Get optical flow estimate from sensors via callback
-static void pl_optical_flow_cb(uint8_t sender_id, uint32_t stamp,
+static void nl_optical_flow_cb(uint8_t sender_id, uint32_t stamp,
                                int16_t UNUSED flow_x, int16_t UNUSED flow_y,
                                int16_t UNUSED flow_der_x,
                                int16_t UNUSED flow_der_y, float UNUSED quality,
@@ -224,8 +295,10 @@ static void pl_optical_flow_cb(uint8_t sender_id, uint32_t stamp,
 
   // Compute derivative of divergence and divergence
   if (dt > 1e-5f) {
+    divergence_dot_half = (size_divergence - divergence_half) / dt;
     divergence_dot = (2.0f * size_divergence - divergence) / dt;
   }
+  divergence_half = size_divergence;
   divergence = 2.0f * size_divergence;
 
   // Compute GT of divergence + derivative
@@ -237,12 +310,12 @@ static void pl_optical_flow_cb(uint8_t sender_id, uint32_t stamp,
   }
   div_gt = div_gt_tmp;
 
-  // Run the proportional controller
-  pl_run(divergence, dt);
+  // Run the network
+  nl_run(divergence_half, divergence_dot_half, dt);
 }
 
-// Run the proportional controller
-static void pl_run(float divergence, float dt) {
+// Run the network
+static void nl_run(float divergence, float divergence_dot, float dt) {
   // These "static" types are great!
   static bool first_run = true;
   static float start_time = 0.0f;
@@ -261,9 +334,11 @@ static void pl_run(float divergence, float dt) {
   if (first_run) {
     start_time = get_sys_time_float();
     nominal_throttle = (float)stabilization_cmd[COMMAND_THRUST] / MAX_PPRZ;
-    pl_errors.sum_err = 0.0f;
-    pl_errors.d_err = 0.0f;
-    pl_errors.prev_err = 0.0f;
+#ifdef NL_UART_CONTROL
+    uart_driver_tx_event(divergence, (uint8_t)1);
+#else
+    zero_neurons();
+#endif
     first_run = false;
   }
 
@@ -277,6 +352,10 @@ static void pl_run(float divergence, float dt) {
     nominal_throttle_sum += (float)stabilization_cmd[COMMAND_THRUST] / MAX_PPRZ;
     nominal_throttle_samples++;
     nominal_throttle = nominal_throttle_sum / nominal_throttle_samples;
+
+    // Initialize network by running zeros through it
+    static float zero_input[] = {0.f, 0.f};
+    predict_nn(zero_input, dt);
     return;
   }
 
@@ -287,47 +366,32 @@ static void pl_run(float divergence, float dt) {
     record = 0;
   }
 
-  // Proportional divergence control
-  // Converting to G's and clamping happens here, in simulation this was done in
-  // environment
-  thrust = pl_divergence_control(divergence, pl_settings.p_gain, pl_settings.i_gain, pl_settings.d_gain, dt);
+  // SNN onboard paparazzi
+  // ifdef:
+  // - Send divergence to upboard over UART
+  // - UART event-triggered RX loop overwrites thrust (see "modules/uart_driver/uart_driver.c")
+#ifdef NL_UART_CONTROL
+  uart_driver_tx_event(divergence, (uint8_t)0);
+#else
+  // Forward network to get action/thrust for control
+  float input[] = {divergence, divergence_dot};
+  thrust = predict_nn(input, dt);
 
-  // Bound thrust to limits
-  Bound(thrust, pl_settings.t_min * 9.81f, pl_settings.t_max * 9.81f);
+  // Bound thrust to limits (-0.8g, 0.5g)
+  Bound(thrust, -7.848f, 4.905f);
+#endif
 
   // Set control mode: active closed-loop control or linear transform
-  if (PL_ACTIVE_CONTROL) {
+  if (NL_ACTIVE_CONTROL) {
     active_control = true;
   } else {
-    guidance_v_set_guided_th(thrust * pl_settings.thrust_effect +
+    guidance_v_set_guided_th(thrust * nl_settings.thrust_effect +
                              nominal_throttle);
   }
 }
 
-// Proportional divergence control
-static float pl_divergence_control(float divergence, float P, float I, float D, float dt) {
-  // Determine the error
-  float err = divergence - pl_settings.div_setpoint;
-
-  // Update errors
-  // NOTE: this is only used when I and D gains are nonzero
-  // Low-pass factor
-  float lp_factor = dt / 0.02;
-  Bound(lp_factor, 0.0f, 1.0f);
-
-  // Maintain controller errors
-  pl_errors.sum_err += err;
-  pl_errors.d_err += (((err - pl_errors.prev_err) / dt) - pl_errors.d_err) * lp_factor;
-  pl_errors.prev_err = err;
-
-  // PID control relative to acceleration setpoint
-  float thrust = 0.0f + P * err + I * pl_errors.sum_err + D * pl_errors.d_err;
-
-  return thrust;
-}
-
 // Closed-loop PI control for going from acceleration to motor control
-static void pl_control() {
+static void nl_control() {
   // "static" here implies that value is kept between function invocations
   static float error_integrator = 0.0f;
 
@@ -339,17 +403,23 @@ static void pl_control() {
   thrust_lp = thrust_filt.o[0];
 
   // Proportional
+  /**
+   * Acceleration is used in a meaningful way I think?
+   * TODO: + because of negative accel for up?
+   * TODO: why this bound? --> in Kirk's code it says to limit effect of integrator to 1m/s
+   * TODO: why thrust effectiveness?
+   */
   float error = thrust_filt.o[0] + accel_ned_filt.o[0];
-  BoundAbs(error, 1.0f / (pl_settings.thrust_p_gain + 0.01f));
+  BoundAbs(error, 1.0f / (nl_settings.thrust_p_gain + 0.01f));
 
   // Integral
   error_integrator += error / PERIODIC_FREQUENCY;
-  BoundAbs(error_integrator, 1.0f / (pl_settings.thrust_i_gain + 0.01f));
+  BoundAbs(error_integrator, 1.0f / (nl_settings.thrust_i_gain + 0.01f));
 
   // Acceleration setpoint
-  acceleration_sp = (thrust + error * pl_settings.thrust_p_gain +
-                           error_integrator * pl_settings.thrust_i_gain) *
-                              pl_settings.thrust_effect +
+  acceleration_sp = (thrust + error * nl_settings.thrust_p_gain +
+                           error_integrator * nl_settings.thrust_i_gain) *
+                              nl_settings.thrust_effect +
                           nominal_throttle;
 
   // Perform active closed-loop control or do simple linear transform
@@ -362,7 +432,7 @@ static void pl_control() {
 
 // Module functions
 // Init
-void pid_landing_init() { pl_init(); }
+void nn_landing_init() { nl_init(); }
 
 // Run
-void pid_landing_event() { pl_control(); }
+void nn_landing_event() { nl_control(); }

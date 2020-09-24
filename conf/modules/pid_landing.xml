@@ -27,7 +27,6 @@
 
     <init fun="pid_landing_init()"/>
     <event fun="pid_landing_event()"/>
-<!--    <periodic fun="spiking_landing_event()" freq="50"/>-->
 
     <makefile target="ap|nps">
         <file name="pid_landing.c"/>
