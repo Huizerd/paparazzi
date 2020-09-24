@@ -29,34 +29,19 @@
 
 // Header with network parameters
 #include "modules/spiking_landing/twolayer/network_conf.h"
+// #include "modules/spiking_landing/threelayer/network_conf.h"
 
 // Header for UART communication
 #include "modules/uart_driver/uart_driver.h"
 
-// #include "modules/spiking_landing/threelayer/network_conf.h"
-
 // Paparazzi headers
-// TODO: do we need all this? And in what order?
-//#include "navigation.h"
-//#include "state.h"
-//#include "subsystems/datalink/downlink.h"
-//#include "subsystems/gps.h"
-//#include "subsystems/gps/gps_datalink.h"
-
-//#include "math/pprz_geodetic_double.h"
-//#include "math/pprz_geodetic_int.h"
-
-//#include "guidance/guidance_h.h"
-//#include "guidance/guidance_indi.h"
-//#include "guidance/guidance_v.h"
-
 #include "firmwares/rotorcraft/guidance/guidance_v_adapt.h"
 #include "firmwares/rotorcraft/stabilization.h"
 #include "generated/airframe.h"
 #include "paparazzi.h"
 #include "subsystems/abi.h"
 
-// Used for automated landing:
+// Used for automated landing
 #include "autopilot.h"
 #include "filters/low_pass_filter.h"
 #include "subsystems/datalink/telemetry.h"
@@ -333,6 +318,12 @@ static void sl_control() {
   thrust_lp = thrust_filt.o[0];
 
   // Proportional
+  /**
+   * Acceleration is used in a meaningful way I think?
+   * TODO: + because of negative accel for up?
+   * TODO: why this bound?
+   * TODO: why thrust effectiveness?
+   */
   float error = thrust_filt.o[0] + accel_ned_filt.o[0];
   BoundAbs(error, 1.0f / (sl_settings.thrust_p_gain + 0.01f));
 

@@ -1,29 +1,29 @@
 <!DOCTYPE module SYSTEM "module.dtd">
 
-<module name="spiking_landing">
+<module name="nn_landing">
     <doc>
-        <description>Spiking neural networks for optical flow landing.</description>
+        <description>Artificial neural networks for optical flow landing.</description>
     </doc>
 
     <settings>
         <dl_settings>
-            <dl_settings NAME="SpikingLanding">
-                <dl_setting var="sl_settings.thrust_effect" min="0" step="0.05" max="2"/>
-                <dl_setting var="sl_settings.thrust_p_gain" min="0" step="0.05" max="2"/>
-                <dl_setting var="sl_settings.thrust_i_gain" min="0" step="0.05" max="2"/>
+            <dl_settings NAME="NNlanding">
+                <dl_setting var="nl_settings.thrust_effect" min="0" step="0.05" max="2"/>
+                <dl_setting var="nl_settings.thrust_p_gain" min="0" step="0.05" max="2"/>
+                <dl_setting var="nl_settings.thrust_i_gain" min="0" step="0.05" max="2"/>
             </dl_settings>
         </dl_settings>
     </settings>
 
     <header>
-        <file name="spiking_landing.h"/>
+        <file name="nn_landing.h"/>
     </header>
 
-    <init fun="spiking_landing_init()"/>
-    <event fun="spiking_landing_event()"/>
+    <init fun="nn_landing_init()"/>
+    <event fun="nn_landing_event()"/>
 
     <makefile target="ap|nps">
-        <file name="spiking_landing.c"/>
+        <file name="nn_landing.c"/>
         <file name="TwoLayerNetwork.c" dir="$(PAPARAZZI_SRC)/sw/ext/tinysnn"/>
         <!-- <file name="ThreeLayerNetwork.c" dir="$(PAPARAZZI_SRC)/sw/ext/tinysnn"/> -->
         <file name="Neuron.c" dir="$(PAPARAZZI_SRC)/sw/ext/tinysnn"/>

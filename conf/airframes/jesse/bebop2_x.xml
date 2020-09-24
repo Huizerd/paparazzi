@@ -1,7 +1,22 @@
 <!DOCTYPE airframe SYSTEM "../airframe.dtd">
 
-<airframe name="bebop2_pid">
+<airframe name="bebop2_x">
 
+    <!--
+        Experimental airframe
+        I think most of our problems have to do with the INS and acceleration:
+         - Whether or not to use it
+         - Which variant
+         - How much filtering and in which directions
+         - What sensors to include
+         - We just want the most accurate measure of acceleration possible
+
+        Additionally, maybe we can use INDI guidance like Rohan does
+
+        Changes in this file:
+         - No INS (apparently Kirk had this as well, and I did also)
+         - Sonar commented out (?)
+    -->
     <firmware name="rotorcraft">
         <!-- Autopilot -->
         <target name="ap" board="bebop2">
@@ -39,6 +54,7 @@
             <define name="AHRS_HEADING_UPDATE_GPS_MIN_SPEED" value="0.0"/>
         </module>
         <module name="ins" type="extended"/>
+        <!-- Sonar is used by ins extended (which is an extended KF) -->
         <define name="USE_SONAR"/>
 
         <!-- Logging of CSV files -->
@@ -68,22 +84,7 @@
             <define name="VIDEO_CAPTURE_JPEG_QUALITY" value="99"/>
         </module>
 
-        <!-- 1hid PID from my paper -->
-        <module name="pid_landing">
-            <define name="PL_P_GAIN" value="0.98f"/>
-            <define name="PL_DIV_SP" value="2.5f"/>
-            <define name="PL_T_MIN" value="-0.2f"/>
-            <define name="PL_T_MAX" value="0.25f"/>
-        </module>
-
-        <!-- cubed-spike+quantized+4 -->
-        <!-- <module name="pid_landing">
-            <define name="PL_P_GAIN" value="0.06f"/>
-            <define name="PL_DIV_SP" value="0.5f"/>
-            <define name="PL_T_MIN" value="-0.03f"/>
-            <define name="PL_T_MAX" value="0.01f"/>
-        </module> -->
-
+        <module name="nn_landing"/>
         <module name="uart_driver"/>
 
         <!-- For streaming video to e.g. VLC -->
@@ -173,10 +174,9 @@
         <!-- trust GPS a lot: -->
         <define name="VFF_R_GPS" value="0.00001"/>
         <define name="VFF_VZ_R_GPS" value="0.00001"/>
-        <define name="SONAR_MIN_RANGE" value="0.0"/>
-        <!-- TODO: Can we use sonar in some way? -->
-        <define name="SONAR_MAX_RANGE" value="6.0"/>
-        <define name="SONAR_UPDATE_ON_AGL" value="FALSE"/>
+        <!-- <define name="SONAR_MIN_RANGE" value="0.0"/> -->
+        <!-- <define name="SONAR_MAX_RANGE" value="6.0"/> -->
+        <!-- <define name="SONAR_UPDATE_ON_AGL" value="FALSE"/> -->
     </section>
 
     <section name="RC_SETPOINT" prefix="STABILIZATION_ATTITUDE_">
