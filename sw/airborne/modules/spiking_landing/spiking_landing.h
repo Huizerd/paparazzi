@@ -52,6 +52,7 @@ extern uint8_t record;
 
 // Struct to hold settings
 struct SpikingLandingSettings {
+  float net_effect;             ///< network effectiveness
   float thrust_effect;          ///< thrust effectiveness
   float thrust_p_gain;          ///< P-gain for active thrust control
   float thrust_i_gain;          ///< I-gain for active thrust control

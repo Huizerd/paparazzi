@@ -65,10 +65,10 @@ PRINT_CONFIG_VAR(NL_OPTICAL_FLOW_ID)
 
 // Gains for closed-loop control
 #ifndef NL_THRUST_EFFECT
-#define NL_THRUST_EFFECT 0.05f
+#define NL_THRUST_EFFECT 0.01f
 #endif
 #ifndef NL_THRUST_P_GAIN
-#define NL_THRUST_P_GAIN 0.7f
+#define NL_THRUST_P_GAIN 2.0f
 #endif
 #ifndef NL_THRUST_I_GAIN
 #define NL_THRUST_I_GAIN 0.3f
@@ -257,7 +257,9 @@ static void nl_init() {
                          nl_optical_flow_cb);
 
   // Init low-pass filters for acceleration and thrust
-  float tau = 1.0f / (2.0f * M_PI * NL_OF_FILTER_CUTOFF);
+  // float tau = 1.0f / (2.0f * M_PI * NL_OF_FILTER_CUTOFF);
+  // In case of higher loop rate this seems too much, revert to above
+  float tau = 5.0f;
   float ts = 1.0f / PERIODIC_FREQUENCY;
   init_butterworth_2_low_pass(&accel_ned_filt, tau, ts, 0.0f);
   init_butterworth_2_low_pass(&thrust_filt, tau, ts, 0.0f);

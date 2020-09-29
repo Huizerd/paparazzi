@@ -8,9 +8,10 @@
     <settings>
         <dl_settings>
             <dl_settings NAME="SpikingLanding">
-                <dl_setting var="sl_settings.thrust_effect" min="0" step="0.05" max="2"/>
-                <dl_setting var="sl_settings.thrust_p_gain" min="0" step="0.05" max="2"/>
-                <dl_setting var="sl_settings.thrust_i_gain" min="0" step="0.05" max="2"/>
+                <dl_setting var="sl_settings.net_effect" min="0" step="0.05" max="10"/>
+                <dl_setting var="sl_settings.thrust_effect" min="0" step="0.01" max="1"/>
+                <dl_setting var="sl_settings.thrust_p_gain" min="0" step="0.05" max="10"/>
+                <dl_setting var="sl_settings.thrust_i_gain" min="0" step="0.05" max="10"/>
             </dl_settings>
         </dl_settings>
     </settings>

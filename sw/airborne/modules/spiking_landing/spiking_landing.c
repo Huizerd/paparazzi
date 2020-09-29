@@ -65,20 +65,25 @@ PRINT_CONFIG_VAR(SL_OPTICAL_FLOW_ID)
 // #define SL_UART_CONTROL
 
 // Gains for closed-loop control
-#ifndef SL_THRUST_EFFECT
-#define SL_THRUST_EFFECT 0.05f
+// 2.5 is good
+#ifndef SL_NET_EFFECT
+#define SL_NET_EFFECT 2.5f
 #endif
+#ifndef SL_THRUST_EFFECT
+#define SL_THRUST_EFFECT 0.01f
+#endif
+// 5.0 is good
 #ifndef SL_THRUST_P_GAIN
-#define SL_THRUST_P_GAIN 0.7f
+#define SL_THRUST_P_GAIN 5.0f
 #endif
 #ifndef SL_THRUST_I_GAIN
 #define SL_THRUST_I_GAIN 0.3f
 #endif
 
 // Optical flow settings
-#ifndef SL_OF_FILTER_CUTOFF
-#define SL_OF_FILTER_CUTOFF 1.5f
-#endif
+// #ifndef SL_OF_FILTER_CUTOFF
+// #define SL_OF_FILTER_CUTOFF 1.5f
+// #endif
 
 // Events
 static abi_event optical_flow_ev;
@@ -157,6 +162,7 @@ static void sl_init() {
 #endif
 
   // Fill settings
+  sl_settings.net_effect = SL_NET_EFFECT;
   sl_settings.thrust_effect = SL_THRUST_EFFECT;
   sl_settings.thrust_p_gain = SL_THRUST_P_GAIN;
   sl_settings.thrust_i_gain = SL_THRUST_I_GAIN;
@@ -173,7 +179,9 @@ static void sl_init() {
                          sl_optical_flow_cb);
 
   // Init low-pass filters for acceleration and thrust
-  float tau = 1.0f / (2.0f * M_PI * SL_OF_FILTER_CUTOFF);
+  // float tau = 1.0f / (2.0f * M_PI * SL_OF_FILTER_CUTOFF);
+  // In case of higher loop rate this seems too much, revert to above
+  float tau = 5.0f;
   float ts = 1.0f / PERIODIC_FREQUENCY;
   init_butterworth_2_low_pass(&accel_ned_filt, tau, ts, 0.0f);
   init_butterworth_2_low_pass(&thrust_filt, tau, ts, 0.0f);
@@ -286,7 +294,7 @@ static void sl_run(float divergence, float divergence_dot) {
   // environment
   net.in[0] = divergence;
   net.in[1] = divergence_dot;
-  thrust = forward_network(&net) * 9.81f;
+  thrust = forward_network(&net) * 9.81f * sl_settings.net_effect;
 
   // Bound thrust to limits (-0.8g, 0.5g)
   Bound(thrust, -7.848f, 4.905f);
@@ -318,12 +326,6 @@ static void sl_control() {
   thrust_lp = thrust_filt.o[0];
 
   // Proportional
-  /**
-   * Acceleration is used in a meaningful way I think?
-   * TODO: + because of negative accel for up?
-   * TODO: why this bound?
-   * TODO: why thrust effectiveness?
-   */
   float error = thrust_filt.o[0] + accel_ned_filt.o[0];
   BoundAbs(error, 1.0f / (sl_settings.thrust_p_gain + 0.01f));
 
