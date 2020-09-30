@@ -77,7 +77,6 @@ void imu_bebop_init(void)
   mpu60x0_i2c_init(&imu_bebop.mpu, &(BEBOP_MPU_I2C_DEV), MPU60X0_ADDR);
   imu_bebop.mpu.config.smplrt_div = BEBOP_SMPLRT_DIV;
   imu_bebop.mpu.config.dlpf_cfg = BEBOP_LOWPASS_FILTER;
-  // imu_bebop.mpu.config.dlpf_cfg_acc = BEBOP_ACCEL_LOWPASS_FILTER;
   imu_bebop.mpu.config.gyro_range = BEBOP_GYRO_RANGE;
   imu_bebop.mpu.config.accel_range = BEBOP_ACCEL_RANGE;
 
