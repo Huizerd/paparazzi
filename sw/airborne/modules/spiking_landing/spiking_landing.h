@@ -28,7 +28,6 @@
 // tinysnn headers
 // Select correct based on using a two- or three-layer network!
 #include "TwoLayerNetwork.h"
-// #include "ThreeLayerNetwork.h"
 
 // C standard library headers
 #include <stdbool.h>
