@@ -29,7 +29,6 @@
 
 // Header with network parameters
 #include "modules/spiking_landing/twolayer/network_conf.h"
-// #include "modules/spiking_landing/threelayer/network_conf.h"
 
 // Header for UART communication
 #include "modules/uart_driver/uart_driver.h"
@@ -159,6 +158,22 @@ static void sl_init() {
   printf("\n============== Network configuration ===============\n\n");
   print_network(&net);
   printf("==================================================\n\n");
+  // Test network
+  printf("\n============== Network test ===============\n\n");
+  for (int i = 0; i < 3; i++)
+  {
+    printf("%d ================================================\n", i);
+    printf("==================================================\n\n");
+    net.in[0] = 0.0f;
+    net.in[1] = 0.0f;
+    forward_network(&net);
+    print_network(&net);
+  }
+  reset_network(&net);
+  printf("==================================================\n\n");
+#else
+  for (int j = 0; j < 100; j++)
+    uart_driver_tx_event(1.0f, (uint8_t)1);
 #endif
 
   // Fill settings
@@ -282,6 +297,9 @@ static void sl_run(float divergence, float divergence_dot) {
     record = 0;
   }
 
+  /**
+   * TODO: do scaling and bounding, let UART overwrite raw_thrust and log thrust (so create extra variable)
+   */
   // SNN onboard paparazzi
   // ifdef:
   // - Send divergence to upboard over UART
