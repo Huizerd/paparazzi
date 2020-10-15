@@ -159,21 +159,18 @@ static void sl_init() {
   print_network(&net);
   printf("==================================================\n\n");
   // Test network
-  printf("\n============== Network test ===============\n\n");
-  for (int i = 0; i < 3; i++)
-  {
-    printf("%d ================================================\n", i);
-    printf("==================================================\n\n");
-    net.in[0] = 0.0f;
-    net.in[1] = 0.0f;
-    forward_network(&net);
-    print_network(&net);
-  }
-  reset_network(&net);
-  printf("==================================================\n\n");
-#else
-  for (int j = 0; j < 100; j++)
-    uart_driver_tx_event(1.0f, (uint8_t)1);
+  // printf("\n============== Network test ===============\n\n");
+  // for (int i = 0; i < 3; i++)
+  // {
+  //   printf("%d ================================================\n", i);
+  //   printf("==================================================\n\n");
+  //   net.in[0] = 0.0f;
+  //   net.in[1] = 0.0f;
+  //   forward_network(&net);
+  //   print_network(&net);
+  // }
+  // reset_network(&net);
+  // printf("==================================================\n\n");
 #endif
 
   // Fill settings
