@@ -117,7 +117,8 @@
         <!-- With mount: nominal thrust = 0.63, so 0.53 * 9600 = 5088 -->
         <!-- With upboard + mount: nominal thrust = 0.76, so 0.66 * 9600 = 6336 -->
         <!-- With powerbank setup: nominal thrust = 0.79, so 0.69 * 9600 = 6624 -->
-        <axis name="THRUST" failsafe_value="4416"/>
+        <!-- With everything: nominal thrust = 0.85, so 0.75 * 9600 = 7200 -->
+        <axis name="THRUST" failsafe_value="7200"/>
     </commands>
 
     <servos driver="Default">
@@ -205,7 +206,8 @@
         <define name="SP_MAX_PHI" value="45" unit="deg"/>
         <define name="SP_MAX_THETA" value="45" unit="deg"/>
         <!-- Max R setpoint: 300 gives big oscillations, 120 is perfect -->
-        <define name="SP_MAX_R" value="120" unit="deg/s"/>
+        <!-- 60 with everything -->
+        <define name="SP_MAX_R" value="60" unit="deg/s"/>
         <define name="DEADBAND_A" value="0"/>
         <define name="DEADBAND_E" value="0"/>
         <define name="DEADBAND_R" value="50"/>
@@ -290,7 +292,8 @@
         <!-- Nominal throttle: 0.56 without any load, 0.76 with mounts + upboard, 0.79 with powerbank setup -->
         <!-- 0.63 with only mount -->
         <!-- 0.68 in Gazebo -->
-        <define name="NOMINAL_HOVER_THROTTLE" value="0.56"/>
+        <!-- 0.85 with everything -->
+        <define name="NOMINAL_HOVER_THROTTLE" value="0.85"/>
         <define name="ADAPT_THROTTLE_ENABLED" value="TRUE"/>
     </section>
 

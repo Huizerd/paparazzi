@@ -61,7 +61,11 @@ PRINT_CONFIG_VAR(SL_OPTICAL_FLOW_ID)
 // Other default values
 // Closed-loop thrust control, else linear transform
 #define SL_ACTIVE_CONTROL true
-// #define SL_UART_CONTROL
+#define SL_UART_CONTROL
+
+// Optical flow setpoint
+// Needed for UART control
+#define OF_SP 1.0f
 
 // Gains for closed-loop control
 // 2.5 is good
@@ -260,6 +264,9 @@ static void sl_run(float divergence, float divergence_dot) {
     first_run = true;
     active_control = false;
     record = 0;
+#ifdef SL_UART_CONTROL
+    uart_driver_tx_event(0.0f, (uint8_t)1);
+#endif
     return;
   }
 
@@ -267,9 +274,7 @@ static void sl_run(float divergence, float divergence_dot) {
   if (first_run) {
     start_time = get_sys_time_float();
     nominal_throttle = (float)stabilization_cmd[COMMAND_THRUST] / MAX_PPRZ;
-#ifdef SL_UART_CONTROL
-    uart_driver_tx_event(divergence, (uint8_t)1);
-#else
+#ifndef SL_UART_CONTROL
     reset_network(&net);
 #endif
     first_run = false;
@@ -277,6 +282,9 @@ static void sl_run(float divergence, float divergence_dot) {
 
   // Let the vehicle settle
   if (get_sys_time_float() - start_time < 5.0f) {
+#ifdef SL_UART_CONTROL
+    uart_driver_tx_event(0.0f, (uint8_t)1);
+#endif
     return;
   }
 
@@ -285,6 +293,9 @@ static void sl_run(float divergence, float divergence_dot) {
     nominal_throttle_sum += (float)stabilization_cmd[COMMAND_THRUST] / MAX_PPRZ;
     nominal_throttle_samples++;
     nominal_throttle = nominal_throttle_sum / nominal_throttle_samples;
+#ifdef SL_UART_CONTROL
+    uart_driver_tx_event(0.0f, (uint8_t)1);
+#endif
     return;
   }
 
@@ -304,7 +315,7 @@ static void sl_run(float divergence, float divergence_dot) {
   // - UART event-triggered RX loop overwrites thrust_raw (see "modules/uart_driver/uart_driver.c")
   // - We scale and bound into thrust (also in "modules/uart_driver/uart_driver.c")
 #ifdef SL_UART_CONTROL
-  uart_driver_tx_event(divergence, (uint8_t)0);
+  uart_driver_tx_event(divergence - OF_SP, (uint8_t)0);
 #else
   // Forward spiking net to get action/thrust for control
   // Converting to G's and clamping happens here, in simulation this was done in
