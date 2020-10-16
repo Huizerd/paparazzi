@@ -88,7 +88,7 @@ static Butterworth2LowPass thrust_filt;
 
 // Variables retained between module calls
 // For divergence + derivative, low-passed acceleration, thrust
-float divergence, divergence_dot, acc_lp, thrust, thrust_lp;
+float divergence, divergence_dot, acc_lp, thrust_raw, thrust, thrust_lp;
 float acceleration_sp;
 float div_gt, divdot_gt;
 float div_gt_tmp;
@@ -135,8 +135,8 @@ static void send_nl(struct transport_tx *trans, struct link_device *dev) {
       &(stateGetPositionNed_f()->x), &(stateGetPositionNed_f()->y),
       &(stateGetPositionNed_f()->z), &(stateGetPositionEnu_f()->z),
       &(state.ned_origin_f.hmsl), &(stateGetSpeedNed_f()->z),
-      &(stateGetAccelNed_f()->z), &accel_ned_filt.o[0], &thrust,
-      &autopilot.mode, &record);
+      &(stateGetAccelNed_f()->z), &accel_ned_filt.o[0], &thrust_raw,
+      &thrust, &autopilot.mode, &record);
 }
 
 // Function definitions
@@ -274,6 +274,7 @@ static void init_globals() {
   div_gt = 0.0f;
   divdot_gt = 0.0f;
   div_gt_tmp = 0.0f;
+  thrust_raw = 0.0f;
   thrust = 0.0f;
   spike_count = 0;
   acc_lp = 0.0f;

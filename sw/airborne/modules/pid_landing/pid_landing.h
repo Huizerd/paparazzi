@@ -36,7 +36,7 @@ extern void pid_landing_event(void);
 // Divergence + derivative and thrust for logging
 // And recording variable to easily identify descents
 // TODO: is extern here dangerous?
-extern float divergence, divergence_dot, acc_lp, thrust_lp, thrust;
+extern float divergence, divergence_dot, acc_lp, thrust_raw, thrust, thrust_lp;
 extern float acceleration_sp;
 extern float div_gt, divdot_gt;
 extern uint16_t spike_count; // not used!
