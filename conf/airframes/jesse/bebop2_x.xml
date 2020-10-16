@@ -114,6 +114,7 @@
         <axis name="YAW" failsafe_value="0"/>
         <!-- Thrust value in case OptiTrack is lost -->
         <!-- Without any load: nominal thrust = 0.56, here do 0.46 * PPRZ_MAX (PPRZ_MAX = 9600) = 4416 -->
+        <!-- With mount: nominal thrust = 0.63, so 0.53 * 9600 = 5088 -->
         <!-- With upboard + mount: nominal thrust = 0.76, so 0.66 * 9600 = 6336 -->
         <!-- With powerbank setup: nominal thrust = 0.79, so 0.69 * 9600 = 6624 -->
         <axis name="THRUST" failsafe_value="4416"/>
@@ -287,6 +288,7 @@
         <define name="HOVER_KD" value="120"/>
         <define name="HOVER_KI" value="20"/>
         <!-- Nominal throttle: 0.56 without any load, 0.76 with mounts + upboard, 0.79 with powerbank setup -->
+        <!-- 0.63 with only mount -->
         <!-- 0.68 in Gazebo -->
         <define name="NOMINAL_HOVER_THROTTLE" value="0.56"/>
         <define name="ADAPT_THROTTLE_ENABLED" value="TRUE"/>
