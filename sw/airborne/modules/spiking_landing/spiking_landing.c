@@ -70,7 +70,7 @@ PRINT_CONFIG_VAR(SL_OPTICAL_FLOW_ID)
 // Gains for closed-loop control
 // 2.5 is good
 #ifndef SL_NET_EFFECT
-#define SL_NET_EFFECT 2.5f
+#define SL_NET_EFFECT 1.25f
 #endif
 #ifndef SL_THRUST_EFFECT
 #define SL_THRUST_EFFECT 0.01f
@@ -281,7 +281,7 @@ static void sl_run(float divergence, float divergence_dot) {
   }
 
   // Let the vehicle settle
-  if (get_sys_time_float() - start_time < 5.0f) {
+  if (get_sys_time_float() - start_time < 3.0f) {
 #ifdef SL_UART_CONTROL
     uart_driver_tx_event(0.0f, (uint8_t)1);
 #endif
@@ -289,7 +289,7 @@ static void sl_run(float divergence, float divergence_dot) {
   }
 
   // After vehicle settling, compute and improve nominal throttle estimate
-  if (get_sys_time_float() - start_time < 10.0f) {
+  if (get_sys_time_float() - start_time < 6.0f) {
     nominal_throttle_sum += (float)stabilization_cmd[COMMAND_THRUST] / MAX_PPRZ;
     nominal_throttle_samples++;
     nominal_throttle = nominal_throttle_sum / nominal_throttle_samples;

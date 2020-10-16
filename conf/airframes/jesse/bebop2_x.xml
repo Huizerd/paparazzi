@@ -117,8 +117,8 @@
         <!-- With mount: nominal thrust = 0.63, so 0.53 * 9600 = 5088 -->
         <!-- With upboard + mount: nominal thrust = 0.76, so 0.66 * 9600 = 6336 -->
         <!-- With powerbank setup: nominal thrust = 0.79, so 0.69 * 9600 = 6624 -->
-        <!-- With everything: nominal thrust = 0.85, so 0.75 * 9600 = 7200 -->
-        <axis name="THRUST" failsafe_value="7200"/>
+        <!-- With everything: nominal thrust = 0.84, so 0.74 * 9600 = 7104 -->
+        <axis name="THRUST" failsafe_value="7104"/>
     </commands>
 
     <servos driver="Default">
@@ -292,9 +292,9 @@
         <!-- Nominal throttle: 0.56 without any load, 0.76 with mounts + upboard, 0.79 with powerbank setup -->
         <!-- 0.63 with only mount -->
         <!-- 0.68 in Gazebo -->
-        <!-- 0.85 with everything -->
-        <define name="NOMINAL_HOVER_THROTTLE" value="0.85"/>
-        <define name="ADAPT_THROTTLE_ENABLED" value="TRUE"/>
+        <!-- 0.84 + NO adapt throttle with everything on the drone! -->
+        <define name="NOMINAL_HOVER_THROTTLE" value="0.84"/>
+        <define name="ADAPT_THROTTLE_ENABLED" value="FALSE"/>
     </section>
 
     <!-- Tuned for Bebop 2 at 1 m and 3.5 m height -->
