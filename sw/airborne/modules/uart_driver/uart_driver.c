@@ -173,8 +173,11 @@ static void parse(uint8_t c) {
         /* hope this is atomic, vo reads from externed dr_data */
         memcpy(&uart_rx_buffer, &databuf, sizeof(thrust_frame_t));
 
-        // overwrite global variable
-        thrust = uart_rx_buffer.thrust;
+        // Overwrite global raw thrust variable
+        thrust_raw = uart_rx_buffer.thrust;
+        // Scale and bound (-0.5g, 0.5g) into thrust
+        thrust = thrust_raw * 9.81f * sl_settings.net_effect;
+        Bound(thrust, -4.905f, 4.905f);
 
         #ifdef DBG
         printf("[RX] thrust: %f\n", uart_rx_buffer.thrust);

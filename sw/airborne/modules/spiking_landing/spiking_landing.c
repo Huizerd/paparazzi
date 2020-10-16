@@ -93,7 +93,7 @@ static Butterworth2LowPass thrust_filt;
 
 // Variables retained between module calls
 // For divergence + derivative, low-passed acceleration, thrust
-float divergence, divergence_dot, acc_lp, thrust, thrust_lp;
+float divergence, divergence_dot, acc_lp, thrust_raw, thrust, thrust_lp;
 float acceleration_sp;
 float div_gt, divdot_gt;
 float div_gt_tmp;
@@ -118,8 +118,8 @@ static void send_sl(struct transport_tx *trans, struct link_device *dev) {
       &(stateGetPositionNed_f()->x), &(stateGetPositionNed_f()->y),
       &(stateGetPositionNed_f()->z), &(stateGetPositionEnu_f()->z),
       &(state.ned_origin_f.hmsl), &(stateGetSpeedNed_f()->z),
-      &(stateGetAccelNed_f()->z), &accel_ned_filt.o[0], &thrust,
-      &autopilot.mode, &record);
+      &(stateGetAccelNed_f()->z), &accel_ned_filt.o[0], &thrust_raw,
+      &thrust, &autopilot.mode, &record);
 }
 
 // Function definitions
@@ -206,6 +206,7 @@ static void init_globals() {
   div_gt = 0.0f;
   divdot_gt = 0.0f;
   div_gt_tmp = 0.0f;
+  thrust_raw = 0.0f;
   thrust = 0.0f;
   spike_count = 0;
   acc_lp = 0.0f;
@@ -300,7 +301,8 @@ static void sl_run(float divergence, float divergence_dot) {
   // SNN onboard paparazzi
   // ifdef:
   // - Send divergence to upboard over UART
-  // - UART event-triggered RX loop overwrites thrust (see "modules/uart_driver/uart_driver.c")
+  // - UART event-triggered RX loop overwrites thrust_raw (see "modules/uart_driver/uart_driver.c")
+  // - We scale and bound into thrust (also in "modules/uart_driver/uart_driver.c")
 #ifdef SL_UART_CONTROL
   uart_driver_tx_event(divergence, (uint8_t)0);
 #else
@@ -311,8 +313,8 @@ static void sl_run(float divergence, float divergence_dot) {
   net.in[1] = divergence_dot;
   thrust = forward_network(&net) * 9.81f * sl_settings.net_effect;
 
-  // Bound thrust to limits (-0.8g, 0.5g)
-  Bound(thrust, -7.848f, 4.905f);
+  // Bound thrust to limits (-0.5g, 0.5g)
+  Bound(thrust, -4.905f, 4.905f);
 
   // Get spike count
   // No need to reset, since that is done in reset_network()
